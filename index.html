@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Browser</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .browser-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #0d1117;
+        }
+
+        /* Toolbar styling */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background-color: #161b22;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .nav-buttons {
+            display: flex;
+            margin-right: 10px;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: #7d8590;
+            font-size: 18px;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        .nav-btn:hover {
+            background-color: #30363d;
+            color: #fff;
+        }
+
+        .nav-btn:disabled {
+            color: #30363d;
+            cursor: not-allowed;
+        }
+
+        .nav-btn:disabled:hover {
+            background: none;
+        }
+
+        .url-bar-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 0 10px;
+            height: 36px;
+        }
+
+        .github-icon {
+            color: #7d8590;
+            margin-right: 8px;
+        }
+
+        #url-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #c9d1d9;
+            font-size: 14px;
+            outline: none;
+        }
+
+        #url-input::placeholder {
+            color: #7d8590;
+        }
+
+        .action-buttons {
+            display: flex;
+            margin-left: 10px;
+        }
+
+        /* Tabs styling */
+        .tabs-container {
+            display: flex;
+            padding: 0 10px;
+            background-color: #161b22;
+            border-bottom: 1px solid #30363d;
+            overflow-x: auto;
+        }
+
+        .tab {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            background-color: #161b22;
+            color: #7d8590;
+            border: 1px solid #30363d;
+            border-bottom: none;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            margin-right: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            max-width: 200px;
+            min-width: 120px;
+        }
+
+        .tab.active {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            border-bottom: 1px solid #0d1117;
+            margin-bottom: -1px;
+        }
+
+        .tab-close {
+            margin-left: 8px;
+            color: #7d8590;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tab-close:hover {
+            background-color: #30363d;
+            color: #fff;
+        }
+
+        .new-tab {
+            padding: 8px 12px;
+            background: none;
+            border: none;
+            color: #7d8590;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        /* Content area */
+        .content-area {
+            flex: 1;
+            background-color: #0d1117;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .github-content {
+            max-width: 980px;
+            margin: 0 auto;
+        }
+
+        .repo-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .repo-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 12px;
+        }
+
+        .repo-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #c9d1d9;
+        }
+
+        .repo-desc {
+            margin: 16px 0;
+            color: #7d8590;
+        }
+
+        .repo-stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            color: #7d8590;
+            font-size: 14px;
+        }
+
+        .stat-icon {
+            margin-right: 4px;
+        }
+
+        .file-list {
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-icon {
+            margin-right: 8px;
+            color: #7d8590;
+        }
+
+        .file-name {
+            flex: 1;
+            color: #c9d1d9;
+        }
+
+        .file-commit {
+            color: #7d8590;
+            font-size: 12px;
+            margin-right: 16px;
+        }
+
+        .file-size {
+            color: #7d8590;
+            font-size: 12px;
+        }
+
+        .readme-container {
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .readme-header {
+            padding-bottom: 16px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid #30363d;
+            color: #c9d1d9;
+            font-weight: 600;
+        }
+
+        .readme-content {
+            line-height: 1.5;
+        }
+
+        .readme-content h1, .readme-content h2, .readme-content h3 {
+            margin: 16px 0 8px 0;
+            color: #c9d1d9;
+        }
+
+        .readme-content p {
+            margin-bottom: 12px;
+            color: #c9d1d9;
+        }
+
+        .readme-content code {
+            background-color: #161b22;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #c9d1d9;
+        }
+
+        .readme-content pre {
+            background-color: #161b22;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+
+        .readme-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        /* Loading indicator */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #30363d;
+            border-top: 4px solid #3fb950;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error message */
+        .error-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            text-align: center;
+        }
+
+        .error-icon {
+            font-size: 48px;
+            color: #f85149;
+            margin-bottom: 16px;
+        }
+
+        .error-title {
+            font-size: 20px;
+            color: #c9d1d9;
+            margin-bottom: 8px;
+        }
+
+        .error-message {
+            color: #7d8590;
+            margin-bottom: 16px;
+        }
+
+        .retry-button {
+            background-color: #238636;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .retry-button:hover {
+            background-color: #2ea043;
+        }
+    </style>
+</head>
+<body>
+    <div class="browser-container">
+        <!-- Tabs -->
+        <div class="tabs-container">
+            <div class="tab active">
+                <span>GitHub Browser</span>
+                <span class="tab-close">×</span>
+            </div>
+            <button class="new-tab">+</button>
+        </div>
+        
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="nav-buttons">
+                <button class="nav-btn" id="back-btn" disabled>←</button>
+                <button class="nav-btn" id="forward-btn" disabled>→</button>
+                <button class="nav-btn" id="refresh-btn">↻</button>
+            </div>
+            
+            <div class="url-bar-container">
+                <span class="github-icon">📁</span>
+                <input type="text" id="url-input" placeholder="Enter GitHub repository URL (e.g., facebook/react)" autofocus>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="nav-btn" id="go-btn">Go</button>
+            </div>
+        </div>
+        
+        <!-- Content Area -->
+        <div class="content-area" id="content-area">
+            <div class="github-content">
+                <div class="welcome-message">
+                    <h1>GitHub Browser</h1>
+                    <p>Enter a GitHub repository URL in the address bar to get started.</p>
+                    <p>Example: <code>facebook/react</code> or <code>microsoft/vscode</code></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const backBtn = document.getElementById('back-btn');
+            const forwardBtn = document.getElementById('forward-btn');
+            const refreshBtn = document.getElementById('refresh-btn');
+            const urlInput = document.getElementById('url-input');
+            const goBtn = document.getElementById('go-btn');
+            const contentArea = document.getElementById('content-area');
+            const tabsContainer = document.querySelector('.tabs-container');
+            const newTabBtn = document.querySelector('.new-tab');
+            
+            // Navigation history
+            let history = [];
+            let currentHistoryIndex = -1;
+            
+            // Current repo info
+            let currentRepo = null;
+            
+            // Initialize with sample repo if needed
+            // navigateToRepo('facebook/react');
+            
+            // Event listeners
+            goBtn.addEventListener('click', navigateToInput);
+            urlInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    navigateToInput();
+                }
+            });
+            
+            refreshBtn.addEventListener('click', function() {
+                if (currentRepo) {
+                    navigateToRepo(currentRepo, true);
+                }
+            });
+            
+            backBtn.addEventListener('click', goBack);
+            forwardBtn.addEventListener('click', goForward);
+            
+            newTabBtn.addEventListener('click', function() {
+                // For simplicity, we'll just add a new tab
+                // In a real implementation, this would create a new browsing context
+                const newTab = document.createElement('div');
+                newTab.className = 'tab';
+                newTab.innerHTML = `
+                    <span>New Tab</span>
+                    <span class="tab-close">×</span>
+                `;
+                
+                tabsContainer.insertBefore(newTab, newTabBtn);
+                
+                // Set the new tab as active
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                newTab.classList.add('active');
+                
+                // Clear content area
+                contentArea.innerHTML = `
+                    <div class="github-content">
+                        <div class="welcome-message">
+                            <h1>GitHub Browser</h1>
+                            <p>Enter a GitHub repository URL in the address bar to get started.</p>
+                            <p>Example: <code>facebook/react</code> or <code>microsoft/vscode</code></p>
+                        </div>
+                    </div>
+                `;
+                
+                urlInput.value = '';
+                currentRepo = null;
+                
+                // Add event listener to close button
+                newTab.querySelector('.tab-close').addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    // For simplicity, just remove the tab
+                    // In a real implementation, we would handle tab switching
+                    if (newTab.classList.contains('active')) {
+                        // If we're closing the active tab, show welcome message
+                        contentArea.innerHTML = `
+                            <div class="github-content">
+                                <div class="welcome-message">
+                                    <h1>GitHub Browser</h1>
+                                    <p>Enter a GitHub repository URL in the address bar to get started.</p>
+                                    <p>Example: <code>facebook/react</code> or <code>microsoft/vscode</code></p>
+                                </div>
+                            </div>
+                        `;
+                        urlInput.value = '';
+                        currentRepo = null;
+                    }
+                    newTab.remove();
+                });
+                
+                // Add event listener to switch to this tab when clicked
+                newTab.addEventListener('click', function() {
+                    document.querySelectorAll('.tab').forEach(tab => {
+                        tab.classList.remove('active');
+                    });
+                    newTab.classList.add('active');
+                    
+                    // For simplicity, we'll just show welcome message
+                    // In a real implementation, we would restore the tab's content
+                    contentArea.innerHTML = `
+                        <div class="github-content">
+                            <div class="welcome-message">
+                                <h1>GitHub Browser</h1>
+                                <p>Enter a GitHub repository URL in the address bar to get started.</p>
+                                <p>Example: <code>facebook/react</code> or <code>microsoft/vscode</code></p>
+                            </div>
+                        </div>
+                    `;
+                    urlInput.value = '';
+                    currentRepo = null;
+                });
+            });
+            
+            // Function to handle navigation from input
+            function navigateToInput() {
+                let repoPath = urlInput.value.trim();
+                
+                // If it's a full GitHub URL, extract the path
+                if (repoPath.startsWith('https://github.com/')) {
+                    repoPath = repoPath.substring('https://github.com/'.length);
+                }
+                
+                // Remove trailing slash if present
+                if (repoPath.endsWith('/')) {
+                    repoPath = repoPath.substring(0, repoPath.length - 1);
+                }
+                
+                // Validate the format (should be owner/repo)
+                if (!repoPath.match(/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/)) {
+                    showError('Invalid repository format', 'Please use format: owner/repository');
+                    return;
+                }
+                
+                navigateToRepo(repoPath);
+            }
+            
+            // Function to navigate to a repository
+            function navigateToRepo(repoPath, isRefresh = false) {
+                // Show loading indicator
+                contentArea.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                `;
+                
+                // Update URL input
+                urlInput.value = repoPath;
+                
+                // Add to history if not a refresh
+                if (!isRefresh) {
+                    // If we're not at the end of history, remove forward history
+                    if (currentHistoryIndex < history.length - 1) {
+                        history = history.slice(0, currentHistoryIndex + 1);
+                    }
+                    
+                    history.push(repoPath);
+                    currentHistoryIndex = history.length - 1;
+                    
+                    // Update navigation buttons
+                    updateNavButtons();
+                }
+                
+                currentRepo = repoPath;
+                
+                // Update tab title
+                const activeTab = document.querySelector('.tab.active');
+                if (activeTab) {
+                    const parts = repoPath.split('/');
+                    activeTab.querySelector('span:first-child').textContent = parts[parts.length - 1];
+                }
+                
+                // Fetch repository data from GitHub API
+                fetch(`https://api.github.com/repos/${repoPath}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(repoData => {
+                        // Now fetch the README
+                        return fetch(`https://api.github.com/repos/${repoPath}/readme`)
+                            .then(response => {
+                                if (!response.ok) {
+                                    return Promise.reject('README not found');
+                                }
+                                return response.json();
+                            })
+                            .then(readmeData => {
+                                return { repoData, readmeData };
+                            })
+                            .catch(() => {
+                                return { repoData, readmeData: null };
+                            });
+                    })
+                    .then(({ repoData, readmeData }) => {
+                        // Render the repository content
+                        renderRepoContent(repoData, readmeData);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching repository data:', error);
+                        showError('Repository not found', `The repository "${repoPath}" could not be found or accessed.`);
+                    });
+            }
+            
+            // Function to render repository content
+            function renderRepoContent(repoData, readmeData) {
+                // Format file size
+                function formatSize(bytes) {
+                    if (bytes < 1024) return bytes + ' B';
+                    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+                    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+                }
+                
+                // Format date
+                function formatDate(dateString) {
+                    const date = new Date(dateString);
+                    return date.toLocaleDateString();
+                }
+                
+                // Decode base64 content
+                let readmeContent = '';
+                if (readmeData && readmeData.content) {
+                    readmeContent = atob(readmeData.content.replace(/\s/g, ''));
+                }
+                
+                // Create HTML content
+                contentArea.innerHTML = `
+                    <div class="github-content">
+                        <div class="repo-header">
+                            <img src="${repoData.owner.avatar_url}" alt="${repoData.owner.login}" class="repo-avatar">
+                            <div>
+                                <div class="repo-name">${repoData.full_name}</div>
+                                <div>${repoData.private ? 'Private' : 'Public'} repository</div>
+                            </div>
+                        </div>
+                        
+                        <div class="repo-desc">${repoData.description || 'No description provided.'}</div>
+                        
+                        <div class="repo-stats">
+                            <div class="stat">
+                                <span class="stat-icon">⭐</span>
+                                <span>${repoData.stargazers_count.toLocaleString()}</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-icon">👀</span>
+                                <span>${repoData.watchers_count.toLocaleString()}</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-icon">🍴</span>
+                                <span>${repoData.forks_count.toLocaleString()}</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-icon">📝</span>
+                                <span>${repoData.language || 'N/A'}</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-icon">📄</span>
+                                <span>${repoData.license?.name || 'No License'}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="file-list">
+                            <div class="file-item">
+                                <span class="file-icon">📁</span>
+                                <span class="file-name">..</span>
+                                <span class="file-commit">Parent directory</span>
+                            </div>
+                            <div class="file-item">
+                                <span class="file-icon">📁</span>
+                                <span class="file-name">.github</span>
+                                <span class="file-commit">Updated ${formatDate(repoData.updated_at)}</span>
+                                <span class="file-size">-</span>
+                            </div>
+                            <div class="file-item">
+                                <span class="file-icon">📁</span>
+                                <span class="file-name">docs</span>
+                                <span class="file-commit">Updated ${formatDate(repoData.updated_at)}</span>
+                                <span class="file-size">-</span>
+                            </div>
+                            <div class="file-item">
+                                <span class="file-icon">📄</span>
+                                <span class="file-name">README.md</span>
+                                <span class="file-commit">Updated ${formatDate(repoData.updated_at)}</span>
+                                <span class="file-size">${formatSize(readmeData ? readmeData.size : 0)}</span>
+                            </div>
+                            <div class="file-item">
+                                <span class="file-icon">📄</span>
+                                <span class="file-name">package.json</span>
+                                <span class="file-commit">Updated ${formatDate(repoData.updated_at)}</span>
+                                <span class="file-size">2.1 KB</span>
+                            </div>
+                            <div class="file-item">
+                                <span class="file-icon">📄</span>
+                                <span class="file-name">LICENSE</span>
+                                <span class="file-commit">Updated ${formatDate(repoData.updated_at)}</span>
+                                <span class="file-size">1.5 KB</span>
+                            </div>
+                        </div>
+                        
+                        ${readmeData ? `
+                        <div class="readme-container">
+                            <div class="readme-header">README.md</div>
+                            <div class="readme-content">${marked.parse(readmeContent)}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+            
+            // Function to show error message
+            function showError(title, message) {
+                contentArea.innerHTML = `
+                    <div class="error-container">
+                        <div class="error-icon">⚠️</div>
+                        <div class="error-title">${title}</div>
+                        <div class="error-message">${message}</div>
+                        <button class="retry-button" onclick="location.reload()">Retry</button>
+                    </div>
+                `;
+            }
+            
+            // Function to go back in history
+            function goBack() {
+                if (currentHistoryIndex > 0) {
+                    currentHistoryIndex--;
+                    navigateToRepo(history[currentHistoryIndex], true);
+                }
+            }
+            
+            // Function to go forward in history
+            function goForward() {
+                if (currentHistoryIndex < history.length - 1) {
+                    currentHistoryIndex++;
+                    navigateToRepo(history[currentHistoryIndex], true);
+                }
+            }
+            
+            // Function to update navigation buttons state
+            function updateNavButtons() {
+                backBtn.disabled = currentHistoryIndex <= 0;
+                forwardBtn.disabled = currentHistoryIndex >= history.length - 1;
+            }
+        });
+    </script>
+    
+    <!-- Marked.js for rendering markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</body>
+</html>
